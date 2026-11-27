@@ -17,7 +17,8 @@ export function Profile() {
     updateProfile,
     exportJson,
     exportCsv,
-    importJson,
+    validateImport,
+    applyImportedState,
     resetAll,
   } = useAppState()
   const { profile } = state
@@ -314,16 +315,26 @@ export function Profile() {
               const file = e.target.files?.[0]
               if (!file) return
               const text = await file.text()
+              const preview = validateImport(text)
+              if (!preview.ok) {
+                setMessage(
+                  `${preview.error} Importazione annullata. I dati attuali non sono stati modificati.`,
+                )
+                e.target.value = ''
+                return
+              }
               const ok = window.confirm(
                 'Importare questo backup sovrascriverà i dati attuali. Continuare?',
               )
-              if (!ok) return
-              const imported = importJson(text)
-              setMessage(
-                imported
-                  ? 'Backup importato correttamente.'
-                  : 'Import fallito: file non valido.',
-              )
+              if (!ok) {
+                setMessage(
+                  'Importazione annullata. I dati attuali non sono stati modificati.',
+                )
+                e.target.value = ''
+                return
+              }
+              applyImportedState(preview.state)
+              setMessage('Backup importato correttamente.')
               e.target.value = ''
             }}
           />

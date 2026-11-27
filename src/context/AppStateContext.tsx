@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
@@ -12,12 +13,14 @@ import {
   getProgramDay,
 } from '../lib/calculations'
 import { startNewCycleState } from '../lib/cycleArchive'
+import type { ImportResult } from '../lib/backupImport'
 import {
   clearState,
   createDefaultState,
+  didLoadUseFallback,
   exportStateJson,
   exportWeightsCsv,
-  importStateJson,
+  importBackupJson,
   loadState,
   saveState,
 } from '../lib/storage'
@@ -51,7 +54,10 @@ type AppContextValue = {
   deleteWaist: (id: string) => void
   exportJson: () => string
   exportCsv: () => string
-  importJson: (json: string) => boolean
+  /** Valida un backup senza modificare lo stato corrente. */
+  validateImport: (json: string) => ImportResult
+  /** Applica uno stato già validato (sostituzione atomica). */
+  applyImportedState: (next: AppState) => void
   resetAll: () => void
   startNewCycle: () => void
 }
@@ -80,8 +86,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(() => loadState())
   const [tab, setTab] = useState<TabId>('oggi')
   const [selectedPlanDay, setSelectedPlanDay] = useState<number | null>(null)
+  // Se il load ha usato i default per corruzione, non sovrascrivere subito
+  // la chiave originale (resta disponibile la copia .corrupt).
+  const skipInitialSave = useRef(didLoadUseFallback())
 
   useEffect(() => {
+    if (skipInitialSave.current) {
+      skipInitialSave.current = false
+      return
+    }
     saveState(state)
   }, [state])
 
@@ -212,11 +225,14 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const exportJson = useCallback(() => exportStateJson(state), [state])
   const exportCsv = useCallback(() => exportWeightsCsv(state), [state])
 
-  const importJson = useCallback((json: string) => {
-    const imported = importStateJson(json)
-    if (!imported) return false
-    setState(imported)
-    return true
+  const validateImport = useCallback((json: string): ImportResult => {
+    return importBackupJson(json)
+  }, [])
+
+  const applyImportedState = useCallback((next: AppState) => {
+    skipInitialSave.current = false
+    setState(next)
+    setSelectedPlanDay(null)
   }, [])
 
   const resetAll = useCallback(() => {
@@ -252,7 +268,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       deleteWaist,
       exportJson,
       exportCsv,
-      importJson,
+      validateImport,
+      applyImportedState,
       resetAll,
       startNewCycle,
     }),
@@ -273,7 +290,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       deleteWaist,
       exportJson,
       exportCsv,
-      importJson,
+      validateImport,
+      applyImportedState,
       resetAll,
       startNewCycle,
     ],
