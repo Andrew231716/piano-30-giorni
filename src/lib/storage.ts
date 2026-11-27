@@ -45,6 +45,7 @@ export function createDefaultState(): AppState {
     ],
     waistEntries: [],
     dailyLogs: [],
+    cycleArchives: [],
   }
 }
 
