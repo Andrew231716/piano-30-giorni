@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Ruler, Scale } from 'lucide-react'
 import { Checklist } from '../components/Checklist'
 import { Modal } from '../components/Modal'
+import { NewCycleConfirmButton } from '../components/NewCycleConfirmButton'
 import { SafetyBanner } from '../components/SafetyBanner'
 import { useAppState } from '../context/AppStateContext'
 import {
@@ -25,7 +26,6 @@ export function Today() {
     addWeight,
     addWaist,
     setTab,
-    startNewCycle,
   } = useAppState()
   const today = todayIso()
   const program = getProgramDay(state.profile.startDate, today)
@@ -115,9 +115,7 @@ export function Today() {
             <button type="button" className="btn btn-primary" onClick={() => setTab('progressi')}>
               Vedi report
             </button>
-            <button type="button" className="btn btn-secondary" onClick={startNewCycle}>
-              Nuovo ciclo
-            </button>
+            <NewCycleConfirmButton>Nuovo ciclo</NewCycleConfirmButton>
           </div>
         )}
       </section>
