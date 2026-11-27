@@ -1,4 +1,4 @@
-import type { AppState, DailyLog, Habits, UserProfile, WaistEntry, WeightEntry } from '../types'
+import type { AppState, CycleArchive, DailyLog, Habits, UserProfile, WaistEntry, WeightEntry } from '../types'
 import { EMPTY_HABITS, SCHEMA_VERSION } from '../types'
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -200,14 +200,32 @@ function parseDailyLogs(raw: unknown): DailyLog[] {
     .filter((entry) => !validateDate(entry.date))
 }
 
+function parseCycleArchives(raw: unknown, fallback: UserProfile): CycleArchive[] {
+  if (!Array.isArray(raw)) return []
+  return raw.filter(isObject).flatMap((item) => {
+    if (!isString(item.archivedAt) || validateDate(item.archivedAt)) return []
+    return [{
+      id: isString(item.id) && item.id.length > 0 ? item.id : crypto.randomUUID(),
+      archivedAt: item.archivedAt,
+      profile: parseProfile(item.profile, fallback),
+      weightEntries: parseWeightEntries(item.weightEntries),
+      waistEntries: parseWaistEntries(item.waistEntries),
+      dailyLogs: parseDailyLogs(item.dailyLogs),
+    }]
+  })
+}
+
 export function parseAppState(raw: unknown, fallback: AppState): AppState | null {
   if (!isObject(raw)) return null
   try {
+    const profile = parseProfile(raw.profile, fallback.profile)
     return {
-      profile: parseProfile(raw.profile, fallback.profile),
+      profile,
       weightEntries: parseWeightEntries(raw.weightEntries),
       waistEntries: parseWaistEntries(raw.waistEntries),
       dailyLogs: parseDailyLogs(raw.dailyLogs),
+      // Legacy V1 backups have no archive collection; their data remains intact.
+      cycleArchives: parseCycleArchives(raw.cycleArchives, fallback.profile),
     }
   } catch {
     return null
