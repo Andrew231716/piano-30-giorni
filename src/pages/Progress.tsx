@@ -335,6 +335,36 @@ export function Progress() {
             </button>
           )}
         </section>
+        <section className="panel fade-in">
+          <h2>Cicli precedenti</h2>
+          {state.cycleArchives.length === 0 ? (
+            <p className="muted">I cicli conclusi o archiviati compariranno qui. Avviare un nuovo ciclo conserverà automaticamente i dati del percorso attuale.</p>
+          ) : (
+            <div className="stack">
+              {[...state.cycleArchives].reverse().map((cycle) => {
+                const weights = [...cycle.weightEntries].sort((a, b) => a.date.localeCompare(b.date))
+                const firstWeight = weights[0]
+                const lastWeight = weights.at(-1)
+                return (
+                  <details key={cycle.id} className="archive-item">
+                    <summary>
+                      Ciclo iniziato il {formatItalianDate(cycle.profile.startDate)} · archiviato il {formatItalianDate(cycle.archivedAt)}
+                    </summary>
+                    <div className="archive-details">
+                      <p>Peso iniziale: {cycle.profile.startWeightKg} kg</p>
+                      <p>Peso registrato: {weights.length} misurazioni</p>
+                      {firstWeight && lastWeight && (
+                        <p>Prima → ultima misura: {firstWeight.weightKg} → {lastWeight.weightKg} kg</p>
+                      )}
+                      <p>Girovita: {cycle.waistEntries.length} misurazioni</p>
+                      <p>Giornate con dati: {cycle.dailyLogs.length}</p>
+                    </div>
+                  </details>
+                )
+              })}
+            </div>
+          )}
+        </section>
       )}
 
       <Modal
