@@ -335,37 +335,71 @@ export function Progress() {
             </button>
           )}
         </section>
-        <section className="panel fade-in">
-          <h2>Cicli precedenti</h2>
-          {state.cycleArchives.length === 0 ? (
-            <p className="muted">I cicli conclusi o archiviati compariranno qui. Avviare un nuovo ciclo conserverà automaticamente i dati del percorso attuale.</p>
-          ) : (
-            <div className="stack">
-              {[...state.cycleArchives].reverse().map((cycle) => {
-                const weights = [...cycle.weightEntries].sort((a, b) => a.date.localeCompare(b.date))
-                const firstWeight = weights[0]
-                const lastWeight = weights.at(-1)
-                return (
-                  <details key={cycle.id} className="archive-item">
-                    <summary>
-                      Ciclo iniziato il {formatItalianDate(cycle.profile.startDate)} · archiviato il {formatItalianDate(cycle.archivedAt)}
-                    </summary>
-                    <div className="archive-details">
-                      <p>Peso iniziale: {cycle.profile.startWeightKg} kg</p>
-                      <p>Peso registrato: {weights.length} misurazioni</p>
-                      {firstWeight && lastWeight && (
-                        <p>Prima → ultima misura: {firstWeight.weightKg} → {lastWeight.weightKg} kg</p>
-                      )}
-                      <p>Girovita: {cycle.waistEntries.length} misurazioni</p>
-                      <p>Giornate con dati: {cycle.dailyLogs.length}</p>
-                    </div>
-                  </details>
-                )
-              })}
-            </div>
-          )}
-        </section>
       )}
+
+      <section className="panel fade-in" aria-labelledby="cicli-precedenti-title">
+        <h2 id="cicli-precedenti-title">Cicli precedenti</h2>
+        <p className="lede">
+          Quando avvii un nuovo ciclo, il percorso attuale viene conservato qui in
+          sola lettura.
+        </p>
+        {state.cycleArchives.length === 0 ? (
+          <p className="muted">
+            Nessun ciclo archiviato. Avviare un nuovo ciclo conserverà
+            automaticamente i dati del percorso attuale.
+          </p>
+        ) : (
+          <div className="stack">
+            {[...state.cycleArchives].reverse().map((cycle) => {
+              const weights = [...cycle.weightEntries].sort((a, b) =>
+                a.date.localeCompare(b.date),
+              )
+              const firstWeight = weights[0]
+              const lastWeight = weights.at(-1)
+              return (
+                <details key={cycle.id} className="archive-item">
+                  <summary>
+                    <span className="archive-summary-main">
+                      Inizio {formatItalianDate(cycle.profile.startDate)}
+                    </span>
+                    <span className="archive-summary-meta muted tiny">
+                      Archiviato il {formatItalianDate(cycle.archivedAt)}
+                    </span>
+                  </summary>
+                  <div className="archive-details">
+                    <p>
+                      <strong>Data di inizio:</strong>{' '}
+                      {formatItalianDate(cycle.profile.startDate)}
+                    </p>
+                    <p>
+                      <strong>Data di archiviazione:</strong>{' '}
+                      {formatItalianDate(cycle.archivedAt)}
+                    </p>
+                    <p>
+                      <strong>Peso iniziale:</strong> {cycle.profile.startWeightKg}{' '}
+                      kg
+                    </p>
+                    <p>
+                      <strong>Misurazioni peso:</strong> {weights.length}
+                      {firstWeight && lastWeight
+                        ? ` · prima ${firstWeight.weightKg} kg → ultima ${lastWeight.weightKg} kg`
+                        : ' · nessuna misura'}
+                    </p>
+                    <p>
+                      <strong>Misurazioni girovita:</strong>{' '}
+                      {cycle.waistEntries.length}
+                    </p>
+                    <p>
+                      <strong>Giornate registrate:</strong>{' '}
+                      {cycle.dailyLogs.length}
+                    </p>
+                  </div>
+                </details>
+              )
+            })}
+          </div>
+        )}
+      </section>
 
       <Modal
         open={weightOpen}

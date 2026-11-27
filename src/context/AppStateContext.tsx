@@ -11,7 +11,7 @@ import {
   deriveDayStatus,
   getProgramDay,
 } from '../lib/calculations'
-import { todayIso } from '../lib/dates'
+import { startNewCycleState } from '../lib/cycleArchive'
 import {
   clearState,
   createDefaultState,
@@ -227,40 +227,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const startNewCycle = useCallback(() => {
-    setState((prev) => {
-      const startDate = todayIso()
-      const latest =
-        [...prev.weightEntries].sort((a, b) => a.date.localeCompare(b.date)).at(-1)
-          ?.weightKg ?? prev.profile.startWeightKg
-      const archive = {
-        id: crypto.randomUUID(),
-        archivedAt: startDate,
-        profile: prev.profile,
-        weightEntries: prev.weightEntries,
-        waistEntries: prev.waistEntries,
-        dailyLogs: prev.dailyLogs,
-      }
-      return {
-        ...prev,
-        profile: {
-          ...prev.profile,
-          startDate,
-          startWeightKg: latest,
-          onboarded: true,
-        },
-        weightEntries: [
-          {
-            id: crypto.randomUUID(),
-            date: startDate,
-            weightKg: latest,
-            note: 'Inizio nuovo ciclo',
-          },
-        ],
-        waistEntries: [],
-        dailyLogs: [],
-        cycleArchives: [...(prev.cycleArchives ?? []), archive],
-      }
-    })
+    setState((prev) => startNewCycleState(prev))
     setTab('oggi')
     setSelectedPlanDay(null)
   }, [])
