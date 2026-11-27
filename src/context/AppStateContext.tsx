@@ -232,7 +232,16 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       const latest =
         [...prev.weightEntries].sort((a, b) => a.date.localeCompare(b.date)).at(-1)
           ?.weightKg ?? prev.profile.startWeightKg
+      const archive = {
+        id: crypto.randomUUID(),
+        archivedAt: startDate,
+        profile: prev.profile,
+        weightEntries: prev.weightEntries,
+        waistEntries: prev.waistEntries,
+        dailyLogs: prev.dailyLogs,
+      }
       return {
+        ...prev,
         profile: {
           ...prev.profile,
           startDate,
@@ -249,6 +258,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         ],
         waistEntries: [],
         dailyLogs: [],
+        cycleArchives: [...(prev.cycleArchives ?? []), archive],
       }
     })
     setTab('oggi')
