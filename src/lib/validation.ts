@@ -204,6 +204,12 @@ function parseCycleArchives(raw: unknown, fallback: UserProfile): CycleArchive[]
   if (!Array.isArray(raw)) return []
   return raw.filter(isObject).flatMap((item) => {
     if (!isString(item.archivedAt) || validateDate(item.archivedAt)) return []
+    // Require a real profile object with a valid startDate so a missing/empty
+    // profile cannot be silently replaced by the current fallback profile.
+    if (!isObject(item.profile)) return []
+    if (!isString(item.profile.startDate) || validateDate(item.profile.startDate)) {
+      return []
+    }
     return [{
       id: isString(item.id) && item.id.length > 0 ? item.id : crypto.randomUUID(),
       archivedAt: item.archivedAt,

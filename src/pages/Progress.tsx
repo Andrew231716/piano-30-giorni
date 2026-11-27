@@ -343,14 +343,14 @@ export function Progress() {
           Quando avvii un nuovo ciclo, il percorso attuale viene conservato qui in
           sola lettura.
         </p>
-        {state.cycleArchives.length === 0 ? (
+        {(state.cycleArchives ?? []).length === 0 ? (
           <p className="muted">
             Nessun ciclo archiviato. Avviare un nuovo ciclo conserverà
             automaticamente i dati del percorso attuale.
           </p>
         ) : (
           <div className="stack">
-            {[...state.cycleArchives].reverse().map((cycle) => {
+            {[...(state.cycleArchives ?? [])].reverse().map((cycle) => {
               const weights = [...cycle.weightEntries].sort((a, b) =>
                 a.date.localeCompare(b.date),
               )

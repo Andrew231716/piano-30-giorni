@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { AppState } from '../types'
+import { SCHEMA_VERSION, STORAGE_KEY } from '../types'
 import {
   buildCycleArchive,
   isFreshEmptyCycle,
@@ -167,6 +168,40 @@ describe('cycle archive', () => {
     expect(next.cycleArchives[0].profile).not.toBe(prev.profile)
   })
 
+  it('lo snapshot resta indipendente anche se si mutano i dati originali', () => {
+    const prev = withCycleData()
+    const next = startNewCycleState(prev, '2026-11-01')
+    prev.weightEntries[0].weightKg = 1
+    prev.dailyLogs[0].notes = 'mutato'
+    prev.profile.startWeightKg = 1
+    expect(next.cycleArchives[0].weightEntries[0].weightKg).toBe(88)
+    expect(next.cycleArchives[0].dailyLogs[0].notes).toBe('Buona regolarità')
+    expect(next.cycleArchives[0].profile.startWeightKg).toBe(88)
+  })
+
+  it('archivia cicli con dati parziali (solo peso, senza girovita/log)', () => {
+    const prev = withCycleData({
+      waistEntries: [],
+      dailyLogs: [],
+      weightEntries: [{ id: 'only', date: '2026-10-01', weightKg: 88, note: 'Peso iniziale' }],
+    })
+    const next = startNewCycleState(prev, '2026-11-01')
+    expect(next.cycleArchives).toHaveLength(1)
+    expect(next.cycleArchives[0].weightEntries).toHaveLength(1)
+    expect(next.cycleArchives[0].waistEntries).toEqual([])
+    expect(next.cycleArchives[0].dailyLogs).toEqual([])
+    expect(next.profile.startWeightKg).toBe(88)
+  })
+
+  it('doppia invocazione in sequenza sullo stesso stato aggiornato non duplica', () => {
+    let state = withCycleData()
+    state = startNewCycleState(state, '2026-11-01')
+    const afterFirst = state.cycleArchives.length
+    state = startNewCycleState(state, '2026-11-01')
+    expect(afterFirst).toBe(1)
+    expect(state.cycleArchives).toHaveLength(1)
+  })
+
   it('buildCycleArchive crea uno snapshot completo', () => {
     const state = withCycleData()
     const archive = buildCycleArchive(state, '2026-11-01')
@@ -226,6 +261,8 @@ describe('cycle archive storage compatibility', () => {
       dailyLogs: [],
       cycleArchives: [
         { id: 'bad', archivedAt: 'not-a-date', profile: state.profile },
+        { id: 'no-profile', archivedAt: '2026-10-01', profile: null },
+        { id: 'empty-profile', archivedAt: '2026-10-01', profile: {} },
         {
           id: 'good',
           archivedAt: '2026-10-01',
@@ -240,8 +277,23 @@ describe('cycle archive storage compatibility', () => {
     expect(imported?.weightEntries.length).toBeGreaterThan(0)
     expect(imported?.cycleArchives).toHaveLength(1)
     expect(imported?.cycleArchives[0].id).toBe('good')
+    expect(imported?.cycleArchives[0].profile.startDate).toBe('2026-09-01')
     expect(imported?.cycleArchives[0].waistEntries).toEqual([])
     expect(imported?.cycleArchives[0].dailyLogs).toEqual([])
+  })
+
+  it('mantiene la chiave localStorage V1 e schema 2 dopo nuovo ciclo', () => {
+    expect(STORAGE_KEY).toBe('piano30.state.v1')
+    expect(SCHEMA_VERSION).toBe(2)
+    const archived = startNewCycleState(withCycleData(), '2026-11-01')
+    saveState(archived)
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY)!) as {
+      cycleArchives: unknown[]
+      profile: { schemaVersion: number }
+    }
+    expect(raw.cycleArchives).toHaveLength(1)
+    expect(raw.profile.schemaVersion).toBe(SCHEMA_VERSION)
+    expect(loadState().cycleArchives[0].weightEntries).toHaveLength(2)
   })
 
   it('cancellazione completa elimina anche gli archivi', () => {
