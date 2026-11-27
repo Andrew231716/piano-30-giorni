@@ -1,7 +1,25 @@
 import type { AppState, UserProfile } from '../types'
 import { SCHEMA_VERSION, STORAGE_KEY } from '../types'
+import { importBackupJson } from './backupImport'
 import { todayIso } from './dates'
 import { parseAppState } from './validation'
+
+export const CORRUPT_STORAGE_KEY = `${STORAGE_KEY}.corrupt`
+
+let lastLoadUsedFallback = false
+
+/** True se l’ultimo loadState ha usato i default (JSON assente/corrotto). */
+export function didLoadUseFallback(): boolean {
+  return lastLoadUsedFallback
+}
+
+function preserveCorruptPayload(raw: string): void {
+  try {
+    localStorage.setItem(CORRUPT_STORAGE_KEY, raw)
+  } catch {
+    // Quota o storage non disponibile: non bloccare l’avvio.
+  }
+}
 
 export function createDefaultProfile(): UserProfile {
   return {
@@ -49,15 +67,37 @@ export function createDefaultState(): AppState {
   }
 }
 
+/**
+ * Caricamento localStorage: tollerante a migrazioni V1 e dati storici.
+ * In caso di corruzione non cancella la chiave originale; salva una copia
+ * di recupero e segnala fallback (il provider evita di sovrascrivere subito).
+ */
 export function loadState(): AppState {
+  lastLoadUsedFallback = false
   const fallback = createDefaultState()
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return fallback
-    const parsed = JSON.parse(raw) as unknown
+    if (!raw) {
+      lastLoadUsedFallback = true
+      return fallback
+    }
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(raw) as unknown
+    } catch {
+      preserveCorruptPayload(raw)
+      lastLoadUsedFallback = true
+      return fallback
+    }
     const state = parseAppState(parsed, fallback)
-    return state ?? fallback
+    if (!state) {
+      preserveCorruptPayload(raw)
+      lastLoadUsedFallback = true
+      return fallback
+    }
+    return state
   } catch {
+    lastLoadUsedFallback = true
     return fallback
   }
 }
@@ -68,20 +108,23 @@ export function saveState(state: AppState): void {
 
 export function clearState(): void {
   localStorage.removeItem(STORAGE_KEY)
+  localStorage.removeItem(CORRUPT_STORAGE_KEY)
 }
 
 export function exportStateJson(state: AppState): string {
   return JSON.stringify(state, null, 2)
 }
 
+/**
+ * Import manuale rigoroso (nessun fallback silenzioso).
+ * Restituisce null se il backup non è accettabile; non scrive su storage.
+ */
 export function importStateJson(json: string): AppState | null {
-  try {
-    const parsed = JSON.parse(json) as unknown
-    return parseAppState(parsed, createDefaultState())
-  } catch {
-    return null
-  }
+  const result = importBackupJson(json)
+  return result.ok ? result.state : null
 }
+
+export { importBackupJson }
 
 export function exportWeightsCsv(state: AppState): string {
   const lines = ['tipo,data,valore,unita,nota']

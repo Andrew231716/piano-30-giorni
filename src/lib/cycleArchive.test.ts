@@ -8,6 +8,7 @@ import {
   startNewCycleState,
 } from './cycleArchive'
 import { clearState, createDefaultState, exportStateJson, importStateJson, loadState, saveState } from './storage'
+import { parseAppState } from './validation'
 
 function withCycleData(overrides: Partial<AppState> = {}): AppState {
   const base = createDefaultState()
@@ -252,7 +253,7 @@ describe('cycle archive storage compatibility', () => {
     expect(roundtrip?.profile.startWeightKg).toBe(86.5)
   })
 
-  it('archivi malformati non compromettono il resto dei dati', () => {
+  it('in localStorage, archivi malformati vengono filtrati senza perdere il resto', () => {
     const state = createDefaultState()
     const payload = {
       profile: state.profile,
@@ -273,13 +274,17 @@ describe('cycle archive storage compatibility', () => {
         },
       ],
     }
-    const imported = importStateJson(JSON.stringify(payload))
-    expect(imported?.weightEntries.length).toBeGreaterThan(0)
-    expect(imported?.cycleArchives).toHaveLength(1)
-    expect(imported?.cycleArchives[0].id).toBe('good')
-    expect(imported?.cycleArchives[0].profile.startDate).toBe('2026-09-01')
-    expect(imported?.cycleArchives[0].waistEntries).toEqual([])
-    expect(imported?.cycleArchives[0].dailyLogs).toEqual([])
+    // Caricamento locale (parseAppState): tollerante. L’import manuale è rigoroso.
+    const loaded = parseAppState(payload, createDefaultState())
+    expect(loaded?.weightEntries.length).toBeGreaterThan(0)
+    expect(loaded?.cycleArchives).toHaveLength(1)
+    expect(loaded?.cycleArchives[0].id).toBe('good')
+    expect(loaded?.cycleArchives[0].profile.startDate).toBe('2026-09-01')
+    expect(loaded?.cycleArchives[0].waistEntries).toEqual([])
+    expect(loaded?.cycleArchives[0].dailyLogs).toEqual([])
+
+    // Import manuale: rifiuta backup V2 con archivi corrotti.
+    expect(importStateJson(JSON.stringify(payload))).toBeNull()
   })
 
   it('mantiene la chiave localStorage V1 e schema 2 dopo nuovo ciclo', () => {

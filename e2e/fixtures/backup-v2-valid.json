@@ -1,0 +1,77 @@
+{
+  "profile": {
+    "schemaVersion": 2,
+    "onboarded": true,
+    "age": 31,
+    "sexForFormula": "unspecified",
+    "heightCm": 176,
+    "startWeightKg": 79,
+    "goalWeightKg": 74,
+    "startDate": "2026-11-10",
+    "calorieTargetKcal": 1850,
+    "proteinTargetG": 125,
+    "carbsTargetG": 190,
+    "fatTargetG": 55,
+    "lunchRoutine": "home",
+    "weekendMealsOut": 1,
+    "sweetsPreference": false,
+    "health": {
+      "lumbarDiscHernia": false,
+      "radiatingLegPain": false,
+      "previousInguinalHerniaRepair": false,
+      "clinicianClearedActivity": null,
+      "allowedActivities": [],
+      "restrictedMovements": []
+    }
+  },
+  "weightEntries": [
+    {
+      "id": "v2-w1",
+      "date": "2026-11-10",
+      "weightKg": 79,
+      "note": "Peso iniziale"
+    }
+  ],
+  "waistEntries": [],
+  "dailyLogs": [],
+  "cycleArchives": [
+    {
+      "id": "v2-arch-1",
+      "archivedAt": "2026-11-09",
+      "profile": {
+        "schemaVersion": 2,
+        "onboarded": true,
+        "age": 31,
+        "sexForFormula": "unspecified",
+        "heightCm": 176,
+        "startWeightKg": 82,
+        "goalWeightKg": 74,
+        "startDate": "2026-10-01",
+        "calorieTargetKcal": 1850,
+        "proteinTargetG": 125,
+        "carbsTargetG": 190,
+        "fatTargetG": 55,
+        "lunchRoutine": "home",
+        "weekendMealsOut": 1,
+        "sweetsPreference": false,
+        "health": {
+          "lumbarDiscHernia": false,
+          "radiatingLegPain": false,
+          "previousInguinalHerniaRepair": false,
+          "clinicianClearedActivity": null,
+          "allowedActivities": [],
+          "restrictedMovements": []
+        }
+      },
+      "weightEntries": [
+        {
+          "id": "v2-arch-w1",
+          "date": "2026-10-01",
+          "weightKg": 82
+        }
+      ],
+      "waistEntries": [],
+      "dailyLogs": []
+    }
+  ]
+}

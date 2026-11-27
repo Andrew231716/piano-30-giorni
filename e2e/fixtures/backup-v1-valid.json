@@ -1,0 +1,59 @@
+{
+  "profile": {
+    "schemaVersion": 1,
+    "onboarded": true,
+    "age": 30,
+    "sexForFormula": "unspecified",
+    "heightCm": 175,
+    "startWeightKg": 80,
+    "goalWeightKg": 75,
+    "startDate": "2026-11-01",
+    "calorieTargetKcal": 1900,
+    "proteinTargetG": 120,
+    "carbsTargetG": 200,
+    "fatTargetG": 60,
+    "lunchRoutine": "home",
+    "weekendMealsOut": 1,
+    "sweetsPreference": false,
+    "health": {
+      "lumbarDiscHernia": false,
+      "radiatingLegPain": false,
+      "previousInguinalHerniaRepair": false,
+      "clinicianClearedActivity": null,
+      "allowedActivities": [],
+      "restrictedMovements": [],
+      "notes": "backup-v1-sintetico"
+    }
+  },
+  "weightEntries": [
+    {
+      "id": "v1-w1",
+      "date": "2026-11-01",
+      "weightKg": 80,
+      "note": "Peso iniziale"
+    }
+  ],
+  "waistEntries": [
+    {
+      "id": "v1-a1",
+      "date": "2026-11-01",
+      "waistCm": 94
+    }
+  ],
+  "dailyLogs": [
+    {
+      "date": "2026-11-01",
+      "dayNumber": 1,
+      "habits": {
+        "portions": true,
+        "protein": true,
+        "fruitVegetables": false,
+        "sweetsManaged": false,
+        "hydration": false,
+        "restAndAllowedActivity": false
+      },
+      "dayStatus": "partial",
+      "notes": "log-v1"
+    }
+  ]
+}

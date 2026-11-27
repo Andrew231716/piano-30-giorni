@@ -36,12 +36,12 @@ test.describe('E. Backup', () => {
     const afterValid = await readStorage(page)
     expect((afterValid?.cycleArchives as unknown[])?.length).toBe(1)
 
-    page.once('dialog', (dialog) => dialog.accept())
     await page.getByRole('button', { name: 'Importa backup' }).click()
     await page
       .locator('input[type="file"]')
       .setInputFiles(path.join(fixtures, 'invalid-backup.json'))
-    await expect(page.getByText(/Import fallito/)).toBeVisible()
+    await expect(page.getByText(/non è un JSON valido/)).toBeVisible()
+    await expect(page.getByText(/non sono stati modificati/)).toBeVisible()
 
     const afterInvalid = await readStorage(page)
     expect((afterInvalid?.cycleArchives as unknown[])?.length).toBe(1)
