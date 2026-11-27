@@ -63,4 +63,49 @@ describe('storage', () => {
   it('rejects invalid import payload', () => {
     expect(importStateJson('[]')).toBeNull()
   })
+  it('preserves archived cycles through JSON export and import', () => {
+    const state = createDefaultState()
+    state.cycleArchives = [{
+      id: 'cycle-previous',
+      archivedAt: '2026-11-27',
+      profile: { ...state.profile, startDate: '2026-10-28', startWeightKg: 90 },
+      weightEntries: [{
+        id: 'weight-previous',
+        date: '2026-10-28',
+        weightKg: 90,
+        note: 'Peso iniziale',
+      }],
+      waistEntries: [{
+        id: 'waist-previous',
+        date: '2026-10-29',
+        waistCm: 96,
+      }],
+      dailyLogs: [],
+    }]
+
+    const imported = importStateJson(exportStateJson(state))
+
+    expect(imported?.cycleArchives).toHaveLength(1)
+    expect(imported?.cycleArchives[0].id).toBe('cycle-previous')
+    expect(imported?.cycleArchives[0].weightEntries[0].weightKg).toBe(90)
+    expect(imported?.cycleArchives[0].waistEntries[0].waistCm).toBe(96)
+  })
+
+  it('loads legacy V1 data without losing current measurements', () => {
+    const state = createDefaultState()
+    const legacy = {
+      profile: { ...state.profile, schemaVersion: 1 },
+      weightEntries: state.weightEntries,
+      waistEntries: [{ id: 'waist-v1', date: state.profile.startDate, waistCm: 94 }],
+      dailyLogs: [],
+    }
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(legacy))
+    const loaded = loadState()
+
+    expect(loaded.waistEntries).toHaveLength(1)
+    expect(loaded.waistEntries[0].waistCm).toBe(94)
+    expect(loaded.cycleArchives).toEqual([])
+  })
+
 })

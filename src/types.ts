@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
 export const STORAGE_KEY = 'piano30.state.v1'
 
 export type SexForFormula = 'male' | 'female' | 'unspecified'
@@ -75,11 +75,21 @@ export type DailyLog = {
   activity?: DailyActivity
 }
 
+export type CycleArchive = {
+  id: string
+  archivedAt: string
+  profile: UserProfile
+  weightEntries: WeightEntry[]
+  waistEntries: WaistEntry[]
+  dailyLogs: DailyLog[]
+}
+
 export type AppState = {
   profile: UserProfile
   weightEntries: WeightEntry[]
   waistEntries: WaistEntry[]
   dailyLogs: DailyLog[]
+  cycleArchives: CycleArchive[]
 }
 
 export type ProgramDayInfo =

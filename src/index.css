@@ -695,3 +695,46 @@ p {
   clip: rect(0, 0, 0, 0);
   border: 0;
 }
+
+.archive-item {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-solid);
+  padding: 4px 12px 8px;
+}
+
+.archive-item summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 48px;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.archive-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.archive-item[open] summary {
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+}
+
+.archive-summary-meta {
+  font-weight: 500;
+}
+
+.archive-details {
+  display: grid;
+  gap: 6px;
+  padding-bottom: 6px;
+  font-size: 0.92rem;
+}
+
+.archive-details p {
+  margin: 0;
+}
