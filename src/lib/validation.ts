@@ -42,7 +42,7 @@ export function validateAge(value: number): string | null {
 }
 
 export function validateDate(value: string): string | null {
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return 'Data non valida'
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return 'Data non valida'
   const [y, m, d] = value.split('-').map(Number)
   const date = new Date(y, m - 1, d)
   if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) {
