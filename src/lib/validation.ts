@@ -13,6 +13,10 @@ function isString(value: unknown): value is string {
   return typeof value === 'string'
 }
 
+function isWithin(value: unknown, min: number, max: number): value is number {
+  return isFiniteNumber(value) && value >= min && value <= max
+}
+
 export function validateWeightKg(value: number): string | null {
   if (!Number.isFinite(value)) return 'Inserisci un peso valido'
   if (value < 30 || value > 300) return 'Il peso deve essere tra 30 e 300 kg'
@@ -50,12 +54,12 @@ export function validateDate(value: string): string | null {
 function parseHabits(raw: unknown): Habits {
   if (!isObject(raw)) return { ...EMPTY_HABITS }
   return {
-    portions: Boolean(raw.portions),
-    protein: Boolean(raw.protein),
-    fruitVegetables: Boolean(raw.fruitVegetables),
-    sweetsManaged: Boolean(raw.sweetsManaged),
-    hydration: Boolean(raw.hydration),
-    restAndAllowedActivity: Boolean(raw.restAndAllowedActivity),
+    portions: raw.portions === true,
+    protein: raw.protein === true,
+    fruitVegetables: raw.fruitVegetables === true,
+    sweetsManaged: raw.sweetsManaged === true,
+    hydration: raw.hydration === true,
+    restAndAllowedActivity: raw.restAndAllowedActivity === true,
   }
 }
 
@@ -66,40 +70,53 @@ function parseProfile(raw: unknown, fallback: UserProfile): UserProfile {
     ...fallback,
     ...raw,
     schemaVersion: SCHEMA_VERSION,
-    onboarded: Boolean(raw.onboarded),
-    age: isFiniteNumber(raw.age) ? raw.age : fallback.age,
+    onboarded: raw.onboarded === true,
+    age: isWithin(raw.age, 14, 100) ? raw.age : fallback.age,
     sexForFormula:
       raw.sexForFormula === 'male' ||
       raw.sexForFormula === 'female' ||
       raw.sexForFormula === 'unspecified'
         ? raw.sexForFormula
         : fallback.sexForFormula,
-    heightCm: isFiniteNumber(raw.heightCm) ? raw.heightCm : fallback.heightCm,
-    startWeightKg: isFiniteNumber(raw.startWeightKg) ? raw.startWeightKg : fallback.startWeightKg,
-    goalWeightKg: isFiniteNumber(raw.goalWeightKg) ? raw.goalWeightKg : fallback.goalWeightKg,
-    startDate: isString(raw.startDate) ? raw.startDate : fallback.startDate,
-    calorieTargetKcal: isFiniteNumber(raw.calorieTargetKcal)
+    heightCm: isWithin(raw.heightCm, 100, 250) ? raw.heightCm : fallback.heightCm,
+    startWeightKg: isWithin(raw.startWeightKg, 30, 300)
+      ? raw.startWeightKg
+      : fallback.startWeightKg,
+    goalWeightKg: isWithin(raw.goalWeightKg, 30, 300)
+      ? raw.goalWeightKg
+      : fallback.goalWeightKg,
+    startDate: isString(raw.startDate) && !validateDate(raw.startDate)
+      ? raw.startDate
+      : fallback.startDate,
+    calorieTargetKcal: isWithin(raw.calorieTargetKcal, 800, 6000)
       ? raw.calorieTargetKcal
       : fallback.calorieTargetKcal,
-    proteinTargetG: isFiniteNumber(raw.proteinTargetG) ? raw.proteinTargetG : fallback.proteinTargetG,
-    carbsTargetG: isFiniteNumber(raw.carbsTargetG) ? raw.carbsTargetG : fallback.carbsTargetG,
-    fatTargetG: isFiniteNumber(raw.fatTargetG) ? raw.fatTargetG : fallback.fatTargetG,
+    proteinTargetG: isWithin(raw.proteinTargetG, 0, 500)
+      ? raw.proteinTargetG
+      : fallback.proteinTargetG,
+    carbsTargetG: isWithin(raw.carbsTargetG, 0, 800)
+      ? raw.carbsTargetG
+      : fallback.carbsTargetG,
+    fatTargetG: isWithin(raw.fatTargetG, 0, 400)
+      ? raw.fatTargetG
+      : fallback.fatTargetG,
     lunchRoutine: raw.lunchRoutine === 'other' ? 'other' : 'home',
-    weekendMealsOut: isFiniteNumber(raw.weekendMealsOut)
+    weekendMealsOut: isWithin(raw.weekendMealsOut, 0, 14)
       ? raw.weekendMealsOut
       : fallback.weekendMealsOut,
-    sweetsPreference: Boolean(raw.sweetsPreference ?? fallback.sweetsPreference),
+    sweetsPreference: typeof raw.sweetsPreference === 'boolean'
+      ? raw.sweetsPreference
+      : fallback.sweetsPreference,
     health: {
-      lumbarDiscHernia: Boolean(
-        healthRaw.lumbarDiscHernia ?? fallback.health.lumbarDiscHernia,
-      ),
-      radiatingLegPain: Boolean(
-        healthRaw.radiatingLegPain ?? fallback.health.radiatingLegPain,
-      ),
-      previousInguinalHerniaRepair: Boolean(
-        healthRaw.previousInguinalHerniaRepair ??
-          fallback.health.previousInguinalHerniaRepair,
-      ),
+      lumbarDiscHernia: typeof healthRaw.lumbarDiscHernia === 'boolean'
+        ? healthRaw.lumbarDiscHernia
+        : fallback.health.lumbarDiscHernia,
+      radiatingLegPain: typeof healthRaw.radiatingLegPain === 'boolean'
+        ? healthRaw.radiatingLegPain
+        : fallback.health.radiatingLegPain,
+      previousInguinalHerniaRepair: typeof healthRaw.previousInguinalHerniaRepair === 'boolean'
+        ? healthRaw.previousInguinalHerniaRepair
+        : fallback.health.previousInguinalHerniaRepair,
       clinicianClearedActivity:
         healthRaw.clinicianClearedActivity === true
           ? true
@@ -122,12 +139,14 @@ function parseWeightEntries(raw: unknown): WeightEntry[] {
   return raw
     .filter(isObject)
     .map((item) => ({
-      id: isString(item.id) ? item.id : crypto.randomUUID(),
+      id: isString(item.id) && item.id.length > 0 ? item.id : crypto.randomUUID(),
       date: isString(item.date) ? item.date : '',
       weightKg: isFiniteNumber(item.weightKg) ? item.weightKg : NaN,
       note: isString(item.note) ? item.note : undefined,
     }))
-    .filter((e) => e.date && Number.isFinite(e.weightKg))
+    .filter((entry) =>
+      !validateDate(entry.date) && isWithin(entry.weightKg, 30, 300),
+    )
 }
 
 function parseWaistEntries(raw: unknown): WaistEntry[] {
@@ -135,12 +154,14 @@ function parseWaistEntries(raw: unknown): WaistEntry[] {
   return raw
     .filter(isObject)
     .map((item) => ({
-      id: isString(item.id) ? item.id : crypto.randomUUID(),
+      id: isString(item.id) && item.id.length > 0 ? item.id : crypto.randomUUID(),
       date: isString(item.date) ? item.date : '',
       waistCm: isFiniteNumber(item.waistCm) ? item.waistCm : NaN,
       note: isString(item.note) ? item.note : undefined,
     }))
-    .filter((e) => e.date && Number.isFinite(e.waistCm))
+    .filter((entry) =>
+      !validateDate(entry.date) && isWithin(entry.waistCm, 40, 200),
+    )
 }
 
 function parseDailyLogs(raw: unknown): DailyLog[] {
@@ -157,16 +178,16 @@ function parseDailyLogs(raw: unknown): DailyLog[] {
           : 'not-started'
       return {
         date: isString(item.date) ? item.date : '',
-        dayNumber: isFiniteNumber(item.dayNumber) ? item.dayNumber : 0,
+        dayNumber: isWithin(item.dayNumber, 0, 30) ? item.dayNumber : 0,
         habits,
         dayStatus: status,
-        mealsOut: isFiniteNumber(item.mealsOut) ? item.mealsOut : undefined,
+        mealsOut: isWithin(item.mealsOut, 0, 20) ? item.mealsOut : undefined,
         sweetsNote: isString(item.sweetsNote) ? item.sweetsNote : undefined,
         notes: isString(item.notes) ? item.notes : undefined,
         activity: isObject(item.activity)
           ? {
               type: isString(item.activity.type) ? item.activity.type : '',
-              durationMinutes: isFiniteNumber(item.activity.durationMinutes)
+              durationMinutes: isWithin(item.activity.durationMinutes, 0, 1440)
                 ? item.activity.durationMinutes
                 : undefined,
               symptomsDuringOrAfter: isString(item.activity.symptomsDuringOrAfter)
@@ -176,7 +197,7 @@ function parseDailyLogs(raw: unknown): DailyLog[] {
           : undefined,
       } satisfies DailyLog
     })
-    .filter((e) => e.date)
+    .filter((entry) => !validateDate(entry.date))
 }
 
 export function parseAppState(raw: unknown, fallback: AppState): AppState | null {
